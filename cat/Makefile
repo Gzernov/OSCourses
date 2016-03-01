@@ -6,7 +6,7 @@ SHELL=bash -O extglob
 all: $(BASE)
 
 clean:
-	rm !($(C)|Makefile)
+	rm -f !($(C)|Makefile)
 
 %: %.c
 	gcc $< -o $(OB) -c
