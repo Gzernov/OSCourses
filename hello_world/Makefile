@@ -5,7 +5,7 @@ C=$(BASE).c
 all: $(BASE)
 
 clean:
-	rm $(BASE) $(OB)
+	rm -f $(BASE) $(OB)
 
 %: %.c
 	gcc $< -o $(OB) -c
