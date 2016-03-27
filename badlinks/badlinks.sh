@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-find $0 -L -type l -mtime +7 -exec echo "{}" \;
+find $1 -L -type l -mtime +7 -exec echo "{}" \;
