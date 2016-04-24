@@ -1,4 +1,4 @@
-BASE=midterm
+BASE=simplesh
 OB=$(BASE).o
 C=$(BASE).cpp
 SHELL=bash -O extglob

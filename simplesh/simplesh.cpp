@@ -6,13 +6,13 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <vector>
+#include <string.h>
 
 using namespace std;
 
 vector<int> runned_proc;
 
 void kill_all(){
-	//cout<<"kill_all" << runned_proc.size()<<"\n";
 	while (!runned_proc.empty()){
 		kill(runned_proc.back(), SIGINT);
 		runned_proc.pop_back();	
@@ -20,7 +20,6 @@ void kill_all(){
 }
 
 void uaction(int sig, siginfo_t* info, void* context){
-	//cout<<"SIGINT\n";
 	kill_all();
 }
 
@@ -39,30 +38,20 @@ int main(){
 		int const BUFF_SIZE = 1024;
 		char buf[BUFF_SIZE];
 		int red_size = 1;
-		string command = "";
-		//cout<<"rest:|"<<rest<<"|\n";
+		string command = rest;
 		size_t i = 0;
 		while (red_size > 0) {
 			red_size = read(0, buf, BUFF_SIZE);
 			if (red_size == -1){
 				break;
 			}
-			string subbuf;
-			for (i = 0; i < red_size; i++){
-				if (buf[i] == '\n'){
-					subbuf = string(buf).substr(0, i);
-					rest = i == (red_size - 1) ? "" : string(buf).substr(i,red_size - 1);
-					//cout<<"i "<<i<<"rs "<< red_size<<"\n";
-					//cout << "rest: >" << rest << "<";
-					
-					break;
-				}
-				
-			}
-			if (subbuf.length() == 0){
-				command += string(buf);
-			} else{
-				command += string(subbuf);
+			char cur_str[red_size];
+			memcpy (cur_str,  buf, red_size);
+			command += string(cur_str);
+			size_t new_line = command.find("\n");
+			if (new_line != string::npos){
+				rest = (new_line == command.length() - 1) ? "" : command.substr(new_line + 1, command.length() - new_line - 1); 
+				command = command.substr(0, new_line);
 				break;
 			}
 		}
@@ -87,7 +76,6 @@ int main(){
 			while (command[i] != '|' && i < command.length()){
 				i++;
 			}
-			//cout<<"b :"<<param_begin<<"e :"<<i;
 			if (param_begin < command.length() && param_begin != i){
 				param = command.substr(param_begin, i - param_begin - (i >= command.length() ? 0 : 1) );
 			}
@@ -95,7 +83,6 @@ int main(){
 				terminate = true;
 				break;
 			}
-			//cout << "cmd: |" << cmd << "| param: >" << param <<"<\n";
 			pipe(outfd);
 			bool last = i >= command.length();
 			int cur_proc = fork();
@@ -136,7 +123,6 @@ int main(){
 		if (terminate){
 			break;
 		}
-		//kill_all();
 	}
 }
 
