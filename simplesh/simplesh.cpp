@@ -40,14 +40,18 @@ int main(){
 		int red_size = 1;
 		string command = rest;
 		size_t i = 0;
+		bool empty = true;
 		while (red_size > 0) {
 			red_size = read(0, buf, BUFF_SIZE);
 			if (red_size == -1){
 				break;
 			}
+			if (red_size != 0){
+				empty = false;
+			}
 			char cur_str[red_size];
 			memcpy (cur_str,  buf, red_size);
-			command += string(cur_str);
+			command += string (cur_str, red_size);
 			size_t new_line = command.find("\n");
 			if (new_line != string::npos){
 				rest = (new_line == command.length() - 1) ? "" : command.substr(new_line + 1, command.length() - new_line - 1); 
@@ -62,6 +66,7 @@ int main(){
 		bool terminate = false;
 		while (true){
 			if (command.length() == 0){
+				terminate = empty;
 				break;
 			}
 			string cmd = "";
@@ -83,10 +88,29 @@ int main(){
 				terminate = true;
 				break;
 			}
+			
+			
 			pipe(outfd);
 			bool last = i >= command.length();
 			int cur_proc = fork();
+			
 			if (!cur_proc){
+				vector<int> spaces = vector<int>();
+				size_t j = 0;
+				for (; j < param.length(); j++){
+					if (param[j] == ' '){
+						spaces.push_back(j);
+					}
+				}
+				char* args[3 + spaces.size()];
+				args[0] = (char*) cmd.c_str();
+				size_t beg = 0;
+				for (j = 0; j < spaces.size(); j++){
+					args[j + 1] = strdup((param.substr(beg, spaces[j] - beg)).c_str());
+					beg = spaces[j] + 1;
+				}
+				args[1 + spaces.size()] = param == "" ? NULL : strdup((param.substr(beg, param.length() - beg)).c_str());
+				args[2 + spaces.size()] = NULL;
 				if (begin != 0){
 					dup2(fromfd[0],0);
 					close(fromfd[1]);
@@ -95,7 +119,7 @@ int main(){
 				if (!last){
 					dup2(outfd[1],1);	
 				}
-				execlp(cmd.c_str(),cmd.c_str(),param == "" ? NULL : param.c_str(),NULL);
+				execvp(args[0], args);
 				return 0;
 			} else {
 				if (begin != 0){
@@ -115,7 +139,7 @@ int main(){
 		
 			while (wait(&status) > 0){
 			}
-
+			
 			if (last){
 				break;
 			}
